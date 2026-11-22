@@ -8,7 +8,6 @@ class Role {
  private:
     std :: string name;
     bool isKiller;
-
 public:
     Role(const std:: string & name, const bool isKiller)
     : name(name), isKiller(isKiller) {
@@ -41,7 +40,7 @@ public:
     friend std::ostream & operator<< (std::ostream & out, const Role & role) {
         out << "Role: " << role.getname()
         <<" | Killer: "
-        <<(role.isKiller? "yes" : "no") << std::endl;
+        <<(role.isKiller? "yes" : "no");
         return out;
     }
 
@@ -96,9 +95,10 @@ public:
     void revive() {
         isAlive = true;         // medicul aduce la viata un jucator
     }
-    friend std::ostream & operator<< (std::ostream & out, const Player & player) {
-        out << "Player: " << player.getnickname()
-        <<" | Alive: " << (player.isAlive? "yes" : "no") << std::endl;
+    friend std::ostream& operator<<(std::ostream& out, const Player& player) {
+        out << "Player: " << player.nickname
+            << " | " << player.role
+            << " | Alive: " << (player.isAlive ? "yes" : "no");
         return out;
     }
 };
@@ -148,7 +148,7 @@ public:
     int getnoOfPlayers() const {
         return noOfPlayers;
     }
-    std::vector<int>& getvotes() const {
+    const std::vector<int>& getvotes() const {
         return votes;
     }
 
@@ -164,6 +164,32 @@ public:
         for (int i = 0; i < noOfPlayers; i++)
             votes[i]=0;
     }
+
+
+    int getMostVotes() const {
+        int maxVotes = 0;
+        int imax = -1;
+        bool tie = false;
+
+        for (int i = 0; i < noOfPlayers; i++) {
+            if (votes[i] > maxVotes) {
+                maxVotes = votes[i];
+                imax = i;
+                tie = false;
+            }
+            else if (votes[i] == maxVotes && maxVotes > 0) {
+                tie = true;
+            }
+        }
+
+        if (tie) {
+            return -1;
+        }
+
+        return imax;
+    }
+
+
     friend std::ostream & operator<< (std::ostream & out, const Round & round) {
         out << "Round: " << round.number
         <<" | Este zi: " << (round.isDay ? "yes" : "no")
@@ -172,10 +198,16 @@ public:
     }
 };
 
+class Game {
+    private:
+
+};
+
 int main() {
     Role killer("Killer", true);
     Role medic("Medic", false);
-
+    Role civil("Civil", false );
+    Role politist ("Politist", false);
     // Test constructor
     std::cout << killer << '\n';
 
@@ -187,10 +219,20 @@ int main() {
     copy = medic;
     std::cout << copy << '\n';
 
+    copy = civil;
+    std::cout << copy << '\n';
+
+    copy = politist;
+    std::cout << copy << '\n';
+
     Player p1("Maria", killer, true);
     std::cout << p1 << '\n';
     Player p2("Ana", medic, true);
     std::cout << p2 << '\n';
+    Player p3("Andrei", civil, true);
+    std::cout << p3 << '\n';
+    Player p4("Joh", politist, true);
+    std::cout << p4 << '\n';
 
     p1.eliminate();
     std:: cout << p1.getisAlive() << '\n';
@@ -198,6 +240,38 @@ int main() {
 
     std::cout << p1.getisAlive() << '\n';
 
+    Round r1(1, true, 4);
+
+    r1.addvote(0);
+    r1.addvote(2);
+    r1.addvote(2);
+    r1.addvote(3);
+    r1.addvote(2);
+
+    std::cout << r1;
+    std::cout << "Most voted player: "
+              << r1.getMostVotes() << '\n';
+
+    r1.resetvote();
+
+    std::cout << "After reset: "
+              << r1.getMostVotes() << '\n';
+    // Test constructor de copiere Player
+    Player p5 = p1;
+    std::cout << p5 << '\n';
+
+    // Test operator= Player
+    p5 = p2;
+    std::cout << p5 << '\n';
+
+    // Test constructor de copiere Round
+    Round r2 = r1;
+    std::cout << r2 << '\n';
+
+    // Test operator= Round
+    Round r3(2, false, 4);
+    r3 = r1;
+    std::cout << r3 << '\n';
     return 0;
 }
     /*
