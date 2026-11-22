@@ -272,6 +272,24 @@ int main() {
     Round r3(2, false, 4);
     r3 = r1;
     std::cout << r3 << '\n';
+    // Test getters Role
+    std::cout << "Is killer: " << killer.getisKiller() << '\n';
+
+    // Test getters Player
+    std::cout << "Nickname: " << p1.getnickname() << '\n';
+    std::cout << "Role: " << p1.getrole() << '\n';
+
+    // Test getters Round
+    std::cout << "Round number: " << r1.getnumber() << '\n';
+    std::cout << "Is day: " << r1.getisDay() << '\n';
+    std::cout << "Number of players: " << r1.getnoOfPlayers() << '\n';
+
+    // Test votes
+    std::cout << "Votes: ";
+    for (int vote : r1.getvotes()) {
+        std::cout << vote << " ";
+    }
+    std::cout << '\n';
     return 0;
 }
     /*
