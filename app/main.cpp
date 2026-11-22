@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include <array>
 #include "Example.h"
 
@@ -13,7 +14,10 @@ public:
     : name(name), isKiller(isKiller) {
 
     }
-
+    Role(const Role& other)
+    : name(other.name),
+      isKiller(other.isKiller) {
+    }
     Role& operator= (const Role & other) {
         if (this != &other) {
             name = other.name;
@@ -52,10 +56,18 @@ private:
     bool isAlive;
 
 public:
+
     Player(const std :: string & nickname, const Role & role, const bool isAlive)
     : nickname(nickname), role(role), isAlive(isAlive) {
 
     }
+
+    Player(const Player& other)
+    : nickname(other.nickname),
+      role(other.role),
+      isAlive(other.isAlive) {
+    }
+
     Player& operator= (const Player & other) {
         if (this != &other) {
             nickname = other.nickname;
@@ -64,6 +76,7 @@ public:
         }
         return *this;
     }
+
 
     ~Player() {
 
@@ -86,6 +99,75 @@ public:
     friend std::ostream & operator<< (std::ostream & out, const Player & player) {
         out << "Player: " << player.getnickname()
         <<" | Alive: " << (player.isAlive? "yes" : "no") << std::endl;
+        return out;
+    }
+};
+
+
+class Round {
+private:
+    int number;
+    bool isDay;
+    int noOfPlayers;
+    std::vector<int> votes;
+
+public:
+    Round(int number, bool isDay, int noOfPlayers)
+    : number(number),
+      isDay(isDay),
+      noOfPlayers(noOfPlayers),
+      votes(noOfPlayers, 0) {
+    }
+
+    Round(const Round& other)
+    : number(other.number),
+      isDay(other.isDay),
+      noOfPlayers(other.noOfPlayers),
+      votes(other.votes) {
+    }
+
+    Round& operator= (const Round & other) {
+        if (this != &other) {
+            number = other.number;
+            isDay = other.isDay;
+            noOfPlayers = other.noOfPlayers;
+            votes = other.votes;
+        }
+        return *this;
+    }
+
+    ~Round() {
+
+    }
+    int getnumber() const {
+        return number;
+    }
+    bool getisDay() const {
+        return isDay;
+    }
+    int getnoOfPlayers() const {
+        return noOfPlayers;
+    }
+    std::vector<int>& getvotes() const {
+        return votes;
+    }
+
+    bool addvote(int i) {
+        if (i >= 0 && i < noOfPlayers) {
+            votes[i]++;
+            return true;
+        }
+        return false;
+    }
+
+    void resetvote() {
+        for (int i = 0; i < noOfPlayers; i++)
+            votes[i]=0;
+    }
+    friend std::ostream & operator<< (std::ostream & out, const Round & round) {
+        out << "Round: " << round.number
+        <<" | Este zi: " << (round.isDay ? "yes" : "no")
+        << " | Numar Jucatori: " << round.noOfPlayers<<std::endl;
         return out;
     }
 };
