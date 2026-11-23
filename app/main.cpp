@@ -4,8 +4,7 @@
 #include<random>
 #include <cstdlib>
 #include <ctime>
-#include<algorithm>
-#include <array>
+
 #include "Example.h"
 
 class Role {
