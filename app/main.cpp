@@ -199,9 +199,104 @@ public:
 };
 
 class Game {
-    private:
+private:
+    std::vector<Player> players;
+    int gamesPlayed;
+    Round roundaCurenta;
+
+public:
+    Game(const std::vector<Player>& players,
+     int gamesPlayed,
+     const Round& roundaCurenta)
+    : players(players),
+      gamesPlayed(gamesPlayed),
+      roundaCurenta(roundaCurenta) {
+    }
+
+    Game(const Game & other)
+    : players(other.players),
+    gamesPlayed(other.gamesPlayed),
+    roundaCurenta(other.roundaCurenta) {
+
+    }
+    Game & operator= (const Game & other) {
+        if (this != &other) {
+            players = other.players;
+            gamesPlayed = other.gamesPlayed;
+            roundaCurenta = other.roundaCurenta;
+        }
+        return *this;
+    }
+    ~Game() {}
+
+    int getNumberOfPlayers() const {
+        return static_cast<int>(players.size());
+    }
+
+    int getAlivePlayers() const {
+        int noAlivePlayers = 0;
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            if (players[i].getisAlive()) {
+                noAlivePlayers++;
+            }
+        }
+        return noAlivePlayers;
+    }
+
+    void showPlayers() const {
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            std::cout << players[i];
+        }
+    }
+
+    bool eliminatePlayers(int i) {
+        if ( i <0 ||i >= getNumberOfPlayers()) {
+            return false;
+        }
+
+        if (!players[i].getisAlive()) {
+            return false;
+        }
+
+        players[i].eliminate();
+        return true;
+    }
+    int checkWinner() const {
+
+        int killer=0;
+        int difrol=0;
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            if (players[i].getisAlive()) {
+                if (players[i].getrole().getisKiller())
+                    killer++;
+                else
+                    difrol++;
+            }
+        }
+        if (killer == 0 && difrol > 0)
+            return 2;
+        if (killer > 0 && difrol <= killer)
+            return 1;
+        return 0;
+
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const Game& game) {
+        out << "Round: " << game.roundaCurenta.getnumber()
+            << " | Games played: " << game.gamesPlayed
+            << " | Number of players: " << game.getNumberOfPlayers()
+            << '\n';
+
+        for (int i = 0; i < game.getNumberOfPlayers(); i++) {
+            out << game.players[i] << '\n';
+        }
+
+        return out;
+    }
 
 };
+
+
 
 int main() {
     Role killer("Killer", true);
@@ -290,6 +385,73 @@ int main() {
         std::cout << vote << " ";
     }
     std::cout << '\n';
+
+    std::cout << "\n===== TEST GAME =====\n";
+
+    // Crearea jocului
+    std::vector<Player> listaPlayers = {p1, p2, p3, p4};
+    Game game1(listaPlayers, 0, r1);
+
+    // Testarea operatorului <<
+    std::cout << "\nJocul initial:\n";
+    std::cout << game1;
+
+    // Testarea metodelor de afisare si numarare
+    std::cout << "\nNumar total de jucatori: "
+              << game1.getNumberOfPlayers() << '\n';
+
+    std::cout << "Jucatori in viata: "
+              << game1.getAlivePlayers() << '\n';
+
+    std::cout << "\nLista jucatorilor:\n";
+    game1.showPlayers();
+
+    // Testarea constructorului de copiere
+    Game game2(game1);
+    std::cout << "\nJoc copiat:\n";
+    std::cout << game2;
+
+    // Testarea operatorului de atribuire
+    Game game3(game1);
+    game3 = game2;
+    std::cout << "\nJoc dupa atribuire:\n";
+    std::cout << game3;
+
+    // Testarea eliminarii unui jucator
+    std::cout << "\nEliminarea jucatorului cu index 1:\n";
+    std::cout << "Eliminare reusita: "
+              << game1.eliminatePlayers(1) << '\n';
+
+    std::cout << "Jucatori ramasi in viata: "
+              << game1.getAlivePlayers() << '\n';
+
+    // Incercarea de a elimina din nou acelasi jucator
+    std::cout << "Eliminare repetata: "
+              << game1.eliminatePlayers(1) << '\n';
+
+    // Testarea unui index invalid
+    std::cout << "Eliminare index invalid: "
+              << game1.eliminatePlayers(100) << '\n';
+
+    // Verificarea conditiilor de victorie
+    std::cout << "\nRezultat initial: "
+              << game1.checkWinner() << '\n';
+
+    // Eliminam inca un civil
+    game1.eliminatePlayers(2);
+
+    std::cout << "Rezultat dupa eliminarea a doi civili: "
+              << game1.checkWinner() << '\n';
+
+    // Testam separat victoria civililor
+    Game gameCivili(listaPlayers, 0, r1);
+    gameCivili.eliminatePlayers(0);
+
+    std::cout << "Rezultat dupa eliminarea Killer-ului: "
+              << gameCivili.checkWinner() << '\n';
+
+    std::cout << "\n===== FINAL TEST GAME =====\n";
+
     return 0;
 }
     /*
