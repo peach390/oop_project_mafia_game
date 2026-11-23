@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include<random>
+#include <cstdlib>
+#include <ctime>
+#include<algorithm>
 #include <array>
 #include "Example.h"
 
@@ -85,6 +89,9 @@ public:
     }
     const Role & getrole() const {
         return role;
+    }
+    void setRole(const Role & newRole) {
+        role = newRole;
     }
     bool getisAlive() const {
         return isAlive;
@@ -281,6 +288,41 @@ public:
 
     }
 
+
+    void assignRandomRoles() {
+        if (getNumberOfPlayers() < 4) {
+            return;
+        }
+
+        std::vector<Role> availableRoles;
+
+        int numberOfKillers = getNumberOfPlayers() / 4;
+
+        for (int i = 0; i < numberOfKillers; i++) {
+            availableRoles.push_back(Role("Killer", true));
+        }
+
+        availableRoles.push_back(Role("Medic", false));
+        availableRoles.push_back(Role("Politist", false));
+
+        int numberOfCivilians = getNumberOfPlayers() - numberOfKillers - 2;
+
+        for (int i = 0; i < numberOfCivilians; i++) {
+            availableRoles.push_back(Role("Civil", false));
+        }
+        for (int i = static_cast<int>(availableRoles.size()) - 1; i > 0; i--) {
+            int j = std::rand() % (i + 1);
+
+            std::swap(availableRoles[i], availableRoles[j]);
+        }
+
+        for (int i=0; i<getNumberOfPlayers(); i++) {
+            players[i].setRole(availableRoles[i]);
+        }
+    }
+
+
+
     friend std::ostream& operator<<(std::ostream& out, const Game& game) {
         out << "Round: " << game.roundaCurenta.getnumber()
             << " | Games played: " << game.gamesPlayed
@@ -299,6 +341,8 @@ public:
 
 
 int main() {
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
+
     Role killer("Killer", true);
     Role medic("Medic", false);
     Role civil("Civil", false );
@@ -451,6 +495,21 @@ int main() {
               << gameCivili.checkWinner() << '\n';
 
     std::cout << "\n===== FINAL TEST GAME =====\n";
+
+    std::cout << "\n===== TEST RANDOM ROLES =====\n";
+
+    Game gameRandom(listaPlayers, 0, r1);
+
+    std::cout << "\nBefore assigning random roles:\n";
+    std::cout << gameRandom;
+
+    gameRandom.assignRandomRoles();
+
+    std::cout << "\nAfter assigning random roles:\n";
+    std::cout << gameRandom;
+
+    std::cout << "\n===== END RANDOM ROLES TEST =====\n";
+
 
     return 0;
 }
