@@ -1,4 +1,7 @@
-# Nu primesc notă pentru că nu am pus titlu și descriere
+# Joc de "Mafia"
+Mafia este un joc copilăriei, un joc multiplayer dezvoltat în C++ folosind principiile programării orientate pe obiecte (POO).
+
+Fiecare jucător primește un rol secret (Killer, Medic, Polițist sau Civil), iar jocul se desfășoară în runde de zi și noapte. Participanții trebuie să colaboreze, să voteze pentru eliminarea Killer-ului, folosindu-se de abilitățile fiecăruia pentru a câștiga.
 
 ### Folosiți template-ul corespunzător grupei voastre!
 
