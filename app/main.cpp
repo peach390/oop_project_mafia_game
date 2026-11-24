@@ -600,6 +600,36 @@ int main() {
     std::cout << "Medic can heal: "
               << testGame.chooseMedicTarget(2) << '\n';
 
+
+    std::cout << "\n===== TEST NIGHT ACTIONS =====\n";
+
+    // Cream un joc separat pentru testare
+    std::vector<Player> nightPlayers = {
+        Player("Maria", killer, true),
+        Player("Ana", medic, true),
+        Player("Andrei", civil, true),
+        Player("Joh", politist, true)
+    };
+
+    Round nightRound(1, false, 4);
+    Game nightGame(nightPlayers, 0, nightRound);
+
+    // Killer-ul il alege pe Andrei (index 2)
+    std::cout << "Killer target valid: "
+              << nightGame.chooseKillerTarget(2) << '\n';
+
+    // Medicul o protejeaza pe Maria (index 0)
+    std::cout << "Medic target valid: "
+              << nightGame.chooseMedicTarget(0) << '\n';
+
+    // Procesam noaptea
+    nightGame.resoveNight();
+
+    std::cout << "Alive players after night: "
+              << nightGame.getAlivePlayers() << '\n';
+
+    std::cout << nightGame;
+
     return 0;
 }
     /*
