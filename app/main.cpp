@@ -4,6 +4,7 @@
 #include<random>
 #include <cstdlib>
 #include <ctime>
+#include <cassert>
 #include<algorithm>
 #include <array>
 #include "Example.h"
@@ -196,6 +197,14 @@ public:
         return imax;
     }
 
+    void nextPhase() {
+        if (isDay) {
+            isDay = false;
+        } else {
+            isDay = true;
+            number++;
+        }
+    }
 
     friend std::ostream & operator<< (std::ostream & out, const Round & round) {
         out << "Round: " << round.number
@@ -213,6 +222,7 @@ private:
     int killerLastTarget;  //memoram pozita in vectorul jucatorilor, a jucatorului omorat in runda curenta
     int medicTarget;
     int medicLastSelfhealRound;
+    int lastInvestigation;
 
 public:
     Game(const std::vector<Player>& players,
@@ -223,7 +233,8 @@ public:
       roundaCurenta(roundaCurenta),
       killerLastTarget(-1),
       medicTarget(-1),
-      medicLastSelfhealRound(-1) {
+      medicLastSelfhealRound(-1),
+    lastInvestigation(-1) {
     }
 
     Game(const Game & other)
@@ -232,7 +243,8 @@ public:
     roundaCurenta(other.roundaCurenta),
     killerLastTarget(other.killerLastTarget),
     medicTarget(other.medicTarget),
-    medicLastSelfhealRound(other.medicLastSelfhealRound) {
+    medicLastSelfhealRound(other.medicLastSelfhealRound),
+    lastInvestigation(other.lastInvestigation) {
 
     }
     Game & operator= (const Game & other) {
@@ -243,11 +255,15 @@ public:
             killerLastTarget = other.killerLastTarget;
             medicTarget = other.medicTarget;
             medicLastSelfhealRound = other.medicLastSelfhealRound;
+            lastInvestigation = other.lastInvestigation;
         }
         return *this;
     }
     ~Game() {}
 
+    void nextPhase() {
+        roundaCurenta.nextPhase();
+    }
     int getNumberOfPlayers() const {
         return static_cast<int>(players.size());
     }
@@ -334,6 +350,8 @@ public:
     }
 
         bool chooseKillerTarget (int i) {
+        if (roundaCurenta.getisDay())
+            return false;
         if (i<0 || i >= getNumberOfPlayers())
             return false;
 
@@ -357,33 +375,52 @@ public:
 
         return false;
     }
-        bool chooseMedicTarget (int i) {
 
-        if (!isMedicAlive()) {
-            return false;
-        }
-
-        if (i<0 || i >= getNumberOfPlayers())
+    bool chooseMedicTarget(int i) {
+        if (roundaCurenta.getisDay())
             return false;
 
-        if (!players[i].getisAlive()) {
+        if (!isMedicAlive())
             return false;
-        }
 
-        if (players[i].getrole().getname() == "Medic" ) {
+        if (i < 0 || i >= getNumberOfPlayers())
+            return false;
 
-           int currentRound = roundaCurenta.getnumber();
+        if (!players[i].getisAlive())
+            return false;
 
-            if (medicLastSelfhealRound != -1 && currentRound - medicLastSelfhealRound < 2)
+        if (players[i].getrole().getname() == "Medic") {
+            int currentRound = roundaCurenta.getnumber();
+
+            if (medicLastSelfhealRound != -1 &&
+                currentRound - medicLastSelfhealRound < 2)
                 return false;
-            medicLastSelfhealRound = currentRound;
         }
+
         medicTarget = i;
         return true;
     }
 
-        void resoveNight (){
-        if (killerLastTarget >= 0 && killerLastTarget < getNumberOfPlayers() && killerLastTarget != medicTarget) {
+
+
+    void resolveNight() {
+        if (roundaCurenta.getisDay())
+            return;
+
+        int currentRound = roundaCurenta.getnumber();
+
+        if (medicTarget >= 0 &&
+            medicTarget < getNumberOfPlayers() &&
+            players[medicTarget].getrole().getname() == "Medic") {
+
+            medicLastSelfhealRound = currentRound;
+            }
+
+        if (killerLastTarget >= 0 &&
+            killerLastTarget < getNumberOfPlayers() &&
+            killerLastTarget != medicTarget &&
+            players[killerLastTarget].getisAlive()) {
+
             players[killerLastTarget].eliminate();
             }
 
@@ -392,245 +429,234 @@ public:
     }
 
 
-    friend std::ostream& operator<<(std::ostream& out, const Game& game) {
-        out << "Round: " << game.roundaCurenta.getnumber()
-            << " | Games played: " << game.gamesPlayed
-            << " | Number of players: " << game.getNumberOfPlayers()
-            << '\n';
 
-        for (int i = 0; i < game.getNumberOfPlayers(); i++) {
-            out << game.players[i] << '\n';
+    bool isPoliceAlive() const {
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            if (players[i].getrole().getname() == "Politist" &&
+                players[i].getisAlive()) {
+                return true;
+                }
         }
 
-        return out;
+        return false;
     }
 
+
+    bool policeInvestigate(int i, std::string& discoveredRole) {
+        if (roundaCurenta.getisDay())
+            return false;
+        if (!isPoliceAlive()) {
+            return false;
+        }
+
+        if (i < 0 || i >= getNumberOfPlayers()) {
+            return false;
+        }
+
+        if (!players[i].getisAlive()) {
+            return false;
+        }
+
+        if (players[i].getrole().getname() == "Politist") {
+            return false;
+        }
+        int currentRound = roundaCurenta.getnumber();
+
+        if (lastInvestigation == currentRound) {
+            return false;
+        }
+        discoveredRole = players[i].getrole().getname();
+
+        lastInvestigation = currentRound;
+
+        return true;
+    }
+    void showPublicPlayers() const {
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            std::cout << "Player: " << players[i].getnickname()
+                      << " | Alive: "
+                      << (players[i].getisAlive() ? "yes" : "no")
+                      << '\n';
+        }
+    }
+
+        friend std::ostream& operator<<(std::ostream& out, const Game& game) {
+            out << game.roundaCurenta
+                << "Games played: " << game.gamesPlayed
+                << " | Number of players: " << game.getNumberOfPlayers()
+                << '\n';
+
+            for (int i = 0; i < game.getNumberOfPlayers(); i++) {
+                out << game.players[i] << '\n';
+            }
+
+            return out;
+        }
 };
 
+
+void runTests() {
+    std::cout << "\n===== START TESTS =====\n";
+
+    // 1. TEST ROLE
+    Role killer("Killer", true);
+    Role medic("Medic", false);
+    Role civil("Civil", false);
+    Role politist("Politist", false);
+
+    assert(killer.getisKiller());
+    assert(!medic.getisKiller());
+    assert(civil.getname() == "Civil");
+
+    Role copyRole(killer);
+    assert(copyRole.getname() == "Killer");
+
+    copyRole = medic;
+    assert(copyRole.getname() == "Medic");
+
+
+    // 2. TEST PLAYER
+    Player p1("Maria", killer, true);
+    Player p2("Ana", medic, true);
+    Player p3("Andrei", civil, true);
+    Player p4("Joh", politist, true);
+
+    assert(p1.getnickname() == "Maria");
+    assert(p1.getisAlive());
+    assert(p1.getrole().getisKiller());
+
+    p1.eliminate();
+    assert(!p1.getisAlive());
+
+    p1.revive();
+    assert(p1.getisAlive());
+
+    Player copyPlayer(p1);
+    assert(copyPlayer.getnickname() == "Maria");
+
+    copyPlayer = p2;
+    assert(copyPlayer.getnickname() == "Ana");
+
+    copyPlayer.setRole(civil);
+    assert(copyPlayer.getrole().getname() == "Civil");
+
+
+    // 3. TEST ROUND
+    Round r1(1, true, 4);
+
+    assert(r1.getnumber() == 1);
+    assert(r1.getisDay());
+    assert(r1.getnoOfPlayers() == 4);
+    assert(r1.getvotes().size() == 4);
+
+    assert(r1.addvote(2));
+    assert(r1.addvote(2));
+    assert(r1.addvote(1));
+
+    assert(r1.getMostVotes() == 2);
+
+    r1.resetvote();
+    assert(r1.getMostVotes() == -1);
+
+    assert(!r1.addvote(100));
+
+    r1.nextPhase();
+    assert(!r1.getisDay());
+    assert(r1.getnumber() == 1);
+
+    r1.nextPhase();
+    assert(r1.getisDay());
+    assert(r1.getnumber() == 2);
+
+    Round copyRound(r1);
+    assert(copyRound.getnumber() == 2);
+
+    Round assignedRound(1, false, 4);
+    assignedRound = r1;
+    assert(assignedRound.getisDay());
+
+
+    // 4. TEST GAME
+    std::vector<Player> listaPlayers = {p1, p2, p3, p4};
+
+    Round gameRound(1, true, 4);
+    Game game1(listaPlayers, 0, gameRound);
+
+    assert(game1.getNumberOfPlayers() == 4);
+    assert(game1.getAlivePlayers() == 4);
+
+    Game game2(game1);
+    assert(game2.getAlivePlayers() == 4);
+
+    game2.eliminatePlayers(1);
+    assert(game2.getAlivePlayers() == 3);
+
+    assert(!game2.eliminatePlayers(1));
+    assert(!game2.eliminatePlayers(100));
+    assert(!game2.eliminatePlayers(-1));
+
+    // Copierea nu trebuie sa modifice originalul
+    assert(game1.getAlivePlayers() == 4);
+
+    game2 = game1;
+    assert(game2.getAlivePlayers() == 4);
+
+    assert(game1.checkWinner() == 0);
+
+    // Victoria civililor
+    Game gameCivili(listaPlayers, 0, gameRound);
+    assert(gameCivili.eliminatePlayers(0));
+    assert(gameCivili.checkWinner() == 2);
+
+    // Victoria Mafiei
+    Game gameMafia(listaPlayers, 0, gameRound);
+    assert(gameMafia.eliminatePlayers(1));
+    assert(gameMafia.eliminatePlayers(2));
+    assert(gameMafia.checkWinner() == 1);
+
+
+    // 5. TEST NIGHT ACTIONS
+    Round nightRound(1, false, 4);
+    Game nightGame(listaPlayers, 0, nightRound);
+
+    assert(nightGame.isMedicAlive());
+    assert(nightGame.isPoliceAlive());
+
+    assert(nightGame.chooseKillerTarget(2));
+    assert(nightGame.chooseMedicTarget(2));
+
+    nightGame.resolveNight();
+
+    // Medicul a protejat victima
+    assert(nightGame.getAlivePlayers() == 4);
+
+
+    // 6. TEST POLICE
+    Game policeGame(listaPlayers, 0, nightRound);
+
+    std::string discoveredRole;
+
+    bool success = policeGame.policeInvestigate(0, discoveredRole);
+
+    assert(success);
+    assert(discoveredRole == "Killer");
+
+    // Nu poate investiga de doua ori in aceeasi runda
+    assert(!policeGame.policeInvestigate(1, discoveredRole));
+
+
+    std::cout << "ALL TESTS PASSED!\n";
+}
 
 
 int main() {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-    Role killer("Killer", true);
-    Role medic("Medic", false);
-    Role civil("Civil", false );
-    Role politist ("Politist", false);
-    // Test constructor
-    std::cout << killer << '\n';
-
-    // Test constructor de copiere
-    Role copy = killer;
-    std::cout << copy << '\n';
-
-    // Test operator =
-    copy = medic;
-    std::cout << copy << '\n';
-
-    copy = civil;
-    std::cout << copy << '\n';
-
-    copy = politist;
-    std::cout << copy << '\n';
-
-    Player p1("Maria", killer, true);
-    std::cout << p1 << '\n';
-    Player p2("Ana", medic, true);
-    std::cout << p2 << '\n';
-    Player p3("Andrei", civil, true);
-    std::cout << p3 << '\n';
-    Player p4("Joh", politist, true);
-    std::cout << p4 << '\n';
-
-    p1.eliminate();
-    std:: cout << p1.getisAlive() << '\n';
-    p1.revive();
-
-    std::cout << p1.getisAlive() << '\n';
-
-    Round r1(1, true, 4);
-
-    r1.addvote(0);
-    r1.addvote(2);
-    r1.addvote(2);
-    r1.addvote(3);
-    r1.addvote(2);
-
-    std::cout << r1;
-    std::cout << "Most voted player: "
-              << r1.getMostVotes() << '\n';
-
-    r1.resetvote();
-
-    std::cout << "After reset: "
-              << r1.getMostVotes() << '\n';
-    // Test constructor de copiere Player
-    Player p5 = p1;
-    std::cout << p5 << '\n';
-
-    // Test operator= Player
-    p5 = p2;
-    std::cout << p5 << '\n';
-
-    // Test constructor de copiere Round
-    Round r2 = r1;
-    std::cout << r2 << '\n';
-
-    // Test operator= Round
-    Round r3(2, false, 4);
-    r3 = r1;
-    std::cout << r3 << '\n';
-    // Test getters Role
-    std::cout << "Is killer: " << killer.getisKiller() << '\n';
-
-    // Test getters Player
-    std::cout << "Nickname: " << p1.getnickname() << '\n';
-    std::cout << "Role: " << p1.getrole() << '\n';
-
-    // Test getters Round
-    std::cout << "Round number: " << r1.getnumber() << '\n';
-    std::cout << "Is day: " << r1.getisDay() << '\n';
-    std::cout << "Number of players: " << r1.getnoOfPlayers() << '\n';
-
-    // Test votes
-    std::cout << "Votes: ";
-    for (int vote : r1.getvotes()) {
-        std::cout << vote << " ";
-    }
-    std::cout << '\n';
-
-    std::cout << "\n===== TEST GAME =====\n";
-
-    // Crearea jocului
-    std::vector<Player> listaPlayers = {p1, p2, p3, p4};
-    Game game1(listaPlayers, 0, r1);
-
-    // Testarea operatorului <<
-    std::cout << "\nJocul initial:\n";
-    std::cout << game1;
-
-    // Testarea metodelor de afisare si numarare
-    std::cout << "\nNumar total de jucatori: "
-              << game1.getNumberOfPlayers() << '\n';
-
-    std::cout << "Jucatori in viata: "
-              << game1.getAlivePlayers() << '\n';
-
-    std::cout << "\nLista jucatorilor:\n";
-    game1.showPlayers();
-
-    // Testarea constructorului de copiere
-    Game game2(game1);
-    std::cout << "\nJoc copiat:\n";
-    std::cout << game2;
-
-    // Testarea operatorului de atribuire
-    Game game3(game1);
-    game3 = game2;
-    std::cout << "\nJoc dupa atribuire:\n";
-    std::cout << game3;
-
-    // Testarea eliminarii unui jucator
-    std::cout << "\nEliminarea jucatorului cu index 1:\n";
-    std::cout << "Eliminare reusita: "
-              << game1.eliminatePlayers(1) << '\n';
-
-    std::cout << "Jucatori ramasi in viata: "
-              << game1.getAlivePlayers() << '\n';
-
-    // Incercarea de a elimina din nou acelasi jucator
-    std::cout << "Eliminare repetata: "
-              << game1.eliminatePlayers(1) << '\n';
-
-    // Testarea unui index invalid
-    std::cout << "Eliminare index invalid: "
-              << game1.eliminatePlayers(100) << '\n';
-
-    // Verificarea conditiilor de victorie
-    std::cout << "\nRezultat initial: "
-              << game1.checkWinner() << '\n';
-
-    // Eliminam inca un civil
-    game1.eliminatePlayers(2);
-
-    std::cout << "Rezultat dupa eliminarea a doi civili: "
-              << game1.checkWinner() << '\n';
-
-    // Testam separat victoria civililor
-    Game gameCivili(listaPlayers, 0, r1);
-    gameCivili.eliminatePlayers(0);
-
-    std::cout << "Rezultat dupa eliminarea Killer-ului: "
-              << gameCivili.checkWinner() << '\n';
-
-    std::cout << "\n===== FINAL TEST GAME =====\n";
-
-    std::cout << "\n===== TEST RANDOM ROLES =====\n";
-
-    Game gameRandom(listaPlayers, 0, r1);
-
-    std::cout << "\nBefore assigning random roles:\n";
-    std::cout << gameRandom;
-
-    gameRandom.assignRandomRoles();
-
-    std::cout << "\nAfter assigning random roles:\n";
-    std::cout << gameRandom;
-
-    std::cout << "\n===== END RANDOM ROLES TEST =====\n";
-
-    std::vector<Player> testPlayers = {
-        Player("Maria", killer, true),
-        Player("Ana", medic, true),
-        Player("Andrei", civil, true),
-        Player("Joh", politist, true)
-    };
-
-    Round testRound(1, false, 4);
-    Game testGame(testPlayers, 0, testRound);
-
-    std::cout << "Medic alive: "
-              << testGame.isMedicAlive() << '\n';
-
-    testGame.eliminatePlayers(1);
-
-    std::cout << "Medic alive after elimination: "
-              << testGame.isMedicAlive() << '\n';
-
-    std::cout << "Medic can heal: "
-              << testGame.chooseMedicTarget(2) << '\n';
-
-
-    std::cout << "\n===== TEST NIGHT ACTIONS =====\n";
-
-    // Cream un joc separat pentru testare
-    std::vector<Player> nightPlayers = {
-        Player("Maria", killer, true),
-        Player("Ana", medic, true),
-        Player("Andrei", civil, true),
-        Player("Joh", politist, true)
-    };
-
-    Round nightRound(1, false, 4);
-    Game nightGame(nightPlayers, 0, nightRound);
-
-    // Killer-ul il alege pe Andrei (index 2)
-    std::cout << "Killer target valid: "
-              << nightGame.chooseKillerTarget(2) << '\n';
-
-    // Medicul o protejeaza pe Maria (index 0)
-    std::cout << "Medic target valid: "
-              << nightGame.chooseMedicTarget(0) << '\n';
-
-    // Procesam noaptea
-    nightGame.resoveNight();
-
-    std::cout << "Alive players after night: "
-              << nightGame.getAlivePlayers() << '\n';
-
-    std::cout << nightGame;
+    runTests();
 
     return 0;
+
+
 }
     /*
     std::cout << "Hello, world!\n";
@@ -685,3 +711,5 @@ int main() {
     ///     fis >> v2[i];
     ///
     ///////////////////////////////////////////////////////////////////////////
+    ///
+    ///
