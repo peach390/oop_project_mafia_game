@@ -581,7 +581,11 @@ void runTests() {
 
     Round gameRound(1, true, 4);
     Game game1(listaPlayers, 0, gameRound);
+    // Testarea afisarii jucatorilor
+    game1.showPlayers();
 
+    // Testarea afisarii publice
+    game1.showPublicPlayers();
     assert(game1.getNumberOfPlayers() == 4);
     assert(game1.getAlivePlayers() == 4);
 
@@ -643,7 +647,13 @@ void runTests() {
 
     // Nu poate investiga de doua ori in aceeasi runda
     assert(!policeGame.policeInvestigate(1, discoveredRole));
+    // Testarea distribuirii aleatorii a rolurilor
+    Game gameRandom(listaPlayers, 0, gameRound);
 
+    gameRandom.assignRandomRoles();
+
+    assert(gameRandom.getNumberOfPlayers() == 4);
+    assert(gameRandom.getAlivePlayers() == 4);
 
     std::cout << "ALL TESTS PASSED!\n";
 }
