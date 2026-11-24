@@ -4,7 +4,8 @@
 #include<random>
 #include <cstdlib>
 #include <ctime>
-
+#include<algorithm>
+#include <array>
 #include "Example.h"
 
 class Role {
@@ -209,6 +210,9 @@ private:
     std::vector<Player> players;
     int gamesPlayed;
     Round roundaCurenta;
+    int killerLastTarget;  //memoram pozita in vectorul jucatorilor, a jucatorului omorat in runda curenta
+    int medicTarget;
+    int medicLastSelfhealRound;
 
 public:
     Game(const std::vector<Player>& players,
@@ -216,13 +220,19 @@ public:
      const Round& roundaCurenta)
     : players(players),
       gamesPlayed(gamesPlayed),
-      roundaCurenta(roundaCurenta) {
+      roundaCurenta(roundaCurenta),
+      killerLastTarget(-1),
+      medicTarget(-1),
+      medicLastSelfhealRound(-1) {
     }
 
     Game(const Game & other)
     : players(other.players),
     gamesPlayed(other.gamesPlayed),
-    roundaCurenta(other.roundaCurenta) {
+    roundaCurenta(other.roundaCurenta),
+    killerLastTarget(other.killerLastTarget),
+    medicTarget(other.medicTarget),
+    medicLastSelfhealRound(other.medicLastSelfhealRound) {
 
     }
     Game & operator= (const Game & other) {
@@ -230,6 +240,9 @@ public:
             players = other.players;
             gamesPlayed = other.gamesPlayed;
             roundaCurenta = other.roundaCurenta;
+            killerLastTarget = other.killerLastTarget;
+            medicTarget = other.medicTarget;
+            medicLastSelfhealRound = other.medicLastSelfhealRound;
         }
         return *this;
     }
@@ -320,6 +333,63 @@ public:
         }
     }
 
+        bool chooseKillerTarget (int i) {
+        if (i<0 || i >= getNumberOfPlayers())
+            return false;
+
+        if (!players[i].getisAlive()) {
+            return false;
+        }
+
+        if (players[i].getrole().getisKiller())
+            return false;
+
+        killerLastTarget = i;
+        return true;
+    }
+    bool isMedicAlive() const {
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            if (players[i].getrole().getname() == "Medic" &&
+                players[i].getisAlive()) {
+                return true;
+                }
+        }
+
+        return false;
+    }
+        bool chooseMedicTarget (int i) {
+
+        if (!isMedicAlive()) {
+            return false;
+        }
+
+        if (i<0 || i >= getNumberOfPlayers())
+            return false;
+
+        if (!players[i].getisAlive()) {
+            return false;
+        }
+
+        if (players[i].getrole().getname() == "Medic" ) {
+
+           int currentRound = roundaCurenta.getnumber();
+
+            if (medicLastSelfhealRound != -1 && currentRound - medicLastSelfhealRound < 2)
+                return false;
+            medicLastSelfhealRound = currentRound;
+        }
+        medicTarget = i;
+        return true;
+    }
+
+        void resoveNight (){
+        if (killerLastTarget >= 0 && killerLastTarget < getNumberOfPlayers() && killerLastTarget != medicTarget) {
+            players[killerLastTarget].eliminate();
+            }
+
+        killerLastTarget = -1;
+        medicTarget = -1;
+    }
 
 
     friend std::ostream& operator<<(std::ostream& out, const Game& game) {
@@ -509,6 +579,26 @@ int main() {
 
     std::cout << "\n===== END RANDOM ROLES TEST =====\n";
 
+    std::vector<Player> testPlayers = {
+        Player("Maria", killer, true),
+        Player("Ana", medic, true),
+        Player("Andrei", civil, true),
+        Player("Joh", politist, true)
+    };
+
+    Round testRound(1, false, 4);
+    Game testGame(testPlayers, 0, testRound);
+
+    std::cout << "Medic alive: "
+              << testGame.isMedicAlive() << '\n';
+
+    testGame.eliminatePlayers(1);
+
+    std::cout << "Medic alive after elimination: "
+              << testGame.isMedicAlive() << '\n';
+
+    std::cout << "Medic can heal: "
+              << testGame.chooseMedicTarget(2) << '\n';
 
     return 0;
 }
