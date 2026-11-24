@@ -626,8 +626,10 @@ void runTests() {
     assert(nightGame.isMedicAlive());
     assert(nightGame.isPoliceAlive());
 
-    assert(nightGame.chooseKillerTarget(2));
-    assert(nightGame.chooseMedicTarget(2));
+    bool killerSuccess = nightGame.chooseKillerTarget(2);
+    assert(killerSuccess);
+    bool medicSuccess = nightGame.chooseMedicTarget(2);
+    assert(medicSuccess);
 
     nightGame.resolveNight();
 
@@ -646,7 +648,10 @@ void runTests() {
     assert(discoveredRole == "Killer");
 
     // Nu poate investiga de doua ori in aceeasi runda
-    assert(!policeGame.policeInvestigate(1, discoveredRole));
+    bool secondInvestigation =
+    policeGame.policeInvestigate(1, discoveredRole);
+
+    assert(!secondInvestigation);
     // Testarea distribuirii aleatorii a rolurilor
     Game gameRandom(listaPlayers, 0, gameRound);
 
