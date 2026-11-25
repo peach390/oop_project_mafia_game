@@ -524,7 +524,7 @@ public:
         return count;
     }
 
-    bool hideScreen() const {
+    static bool hideScreen() {
         std::cout << "\nApasa ENTER pentru a ascunde informatiile...";
 
         std::cin.ignore(
@@ -965,6 +965,9 @@ void runTests() {
 
     Game game1(listaPlayers, 0, gameRound);
 
+    game1.showPlayers();
+    game1.showPublicPlayers();
+
     assert(game1.getNumberOfPlayers() == 4);
     assert(game1.getAlivePlayers() == 4);
     assert(game1.checkWinner() == 0);
@@ -1029,10 +1032,12 @@ void runTests() {
     assert(killerGame.eliminatePlayers(2));
 
     // Killer-ul nu poate ataca un jucator eliminat
-    assert(!killerGame.chooseKillerTarget(2));
+    bool invalidAttack = killerGame.chooseKillerTarget(2);
+    assert(!invalidAttack);
 
     // Killer-ul poate alege alta victima
-    assert(killerGame.chooseKillerTarget(1));
+    bool attackSuccess = killerGame.chooseKillerTarget(1);
+    assert(attackSuccess);
 
     killerGame.resolveNight();
 
