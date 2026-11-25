@@ -479,6 +479,17 @@ public:
                       << '\n';
         }
     }
+    int countRole(const std::string& roleName) const {
+        int count = 0;
+
+        for (int i = 0; i < getNumberOfPlayers(); i++) {
+            if (players[i].getrole().getname() == roleName) {
+                count++;
+            }
+        }
+
+        return count;
+    }
 
         friend std::ostream& operator<<(std::ostream& out, const Game& game) {
             out << game.roundaCurenta
@@ -582,10 +593,10 @@ void runTests() {
     Round gameRound(1, true, 4);
     Game game1(listaPlayers, 0, gameRound);
     // Testarea afisarii jucatorilor
-    game1.showPlayers();
+    //game1.showPlayers();
 
     // Testarea afisarii publice
-    game1.showPublicPlayers();
+    //game1.showPublicPlayers();
     assert(game1.getNumberOfPlayers() == 4);
     assert(game1.getAlivePlayers() == 4);
 
@@ -659,6 +670,130 @@ void runTests() {
 
     assert(gameRandom.getNumberOfPlayers() == 4);
     assert(gameRandom.getAlivePlayers() == 4);
+    // TEST: Medicul salveaza victima Killer-ului
+
+    Round nightRound2(1, false, 4);
+    Game saveGame(listaPlayers, 0, nightRound2);
+
+    bool attack = saveGame.chooseKillerTarget(2);
+    bool protection = saveGame.chooseMedicTarget(2);
+
+    assert(attack);
+    assert(protection);
+
+    saveGame.resolveNight();
+
+    assert(saveGame.getAlivePlayers() == 4);
+    // TEST: Medicul protejeaza alta persoana
+
+    Round nightRound3(1, false, 4);
+    Game deathGame(listaPlayers, 0, nightRound3);
+
+    bool attack2 = deathGame.chooseKillerTarget(2);
+    bool protection2 = deathGame.chooseMedicTarget(1);
+
+    assert(attack2);
+    assert(protection2);
+
+    deathGame.resolveNight();
+
+    std::cout << "Testing medic self-protection...\n";
+
+    Round selfRound(1, false, 4);
+    Game selfGame(listaPlayers, 0, selfRound);
+
+    // Noaptea 1
+    bool selfHeal1 = selfGame.chooseMedicTarget(1);
+    assert(selfHeal1);
+
+    selfGame.resolveNight();
+
+    // Trecem la ziua 2 si apoi la noaptea 2
+    selfGame.nextPhase();
+    selfGame.nextPhase();
+
+    // Noaptea 2
+    bool selfHeal2 = selfGame.chooseMedicTarget(1);
+    assert(!selfHeal2);
+
+    // Medicul poate proteja un alt jucator
+    bool healOther = selfGame.chooseMedicTarget(2);
+    assert(healOther);
+
+    selfGame.resolveNight();
+
+    // Trecem la noaptea 3
+    selfGame.nextPhase();
+    selfGame.nextPhase();
+
+    // Noaptea 3
+    bool selfHeal3 = selfGame.chooseMedicTarget(1);
+    assert(selfHeal3);
+
+    assert(deathGame.getAlivePlayers() == 3);
+    // TEST: Investigatii in nopti diferite
+
+    Round investigationRound(1, false, 4);
+    Game investigationGame(listaPlayers, 0, investigationRound);
+
+    std::string roleFound;
+
+    // Noaptea 1
+    bool investigation1 =
+        investigationGame.policeInvestigate(0, roleFound);
+
+    assert(investigation1);
+    assert(roleFound == "Killer");
+
+    // Trecem la noaptea 2
+    investigationGame.nextPhase();
+    investigationGame.nextPhase();
+
+    // Noaptea 2
+    bool investigation2 =
+        investigationGame.policeInvestigate(2, roleFound);
+
+    assert(investigation2);
+    assert(roleFound == "Civil");
+
+    std::cout << "Testing random role assignment...\n";
+
+    Role initialRole("Civil", false);
+
+    // Test pentru 4 jucatori
+    for (int n : {4, 6, 8}) {
+        std::vector<Player> testPlayers;
+
+        for (int i = 0; i < n; i++) {
+            testPlayers.push_back(
+                Player("Player" + std::to_string(i + 1), initialRole, true)
+            );
+        }
+
+        Round testRound(1, true, n);
+        Game randomGame(testPlayers, 0, testRound);
+
+        randomGame.assignRandomRoles();
+
+        assert(randomGame.getNumberOfPlayers() == n);
+        assert(randomGame.getAlivePlayers() == n);
+
+        assert(randomGame.countRole("Killer") == n / 4);
+        assert(randomGame.countRole("Medic") == 1);
+        assert(randomGame.countRole("Politist") == 1);
+
+        int expectedCivilians = n - n / 4 - 2;
+        assert(randomGame.countRole("Civil") == expectedCivilians);
+
+        int totalRoles =
+            randomGame.countRole("Killer") +
+            randomGame.countRole("Medic") +
+            randomGame.countRole("Politist") +
+            randomGame.countRole("Civil");
+
+        assert(totalRoles == n);
+    }
+
 
     std::cout << "ALL TESTS PASSED!\n";
 }
@@ -667,7 +802,88 @@ void runTests() {
 int main() {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-    runTests();
+    int option = -1;
+    while (option != 0) {
+        std::cout<< std::endl << "MAFIA GAME"<<std::endl;
+        std::cout<< "1. Start joc"<<std::endl;
+        std::cout<< "2. Reguli"<<std::endl;
+        std::cout<< "3. ruleaza teste"<<std::endl;
+        std::cout<< "0. Exit"<<std::endl;
+        std::cout<< " Alege optiunea"<<std::endl;
+
+        if (!(std::cin >> option)) {
+            std::cout <<"Aceasta optiune nu exista."<<std::endl;
+            break;
+        }
+        switch (option) {
+            case 1:
+                {
+                std::cout<<"Configurare joc...";
+
+                int numberOfPlayers;
+
+                std::cout << "\nNumar de jucatori (minim 4): ";
+                if (!(std::cin >> numberOfPlayers)) {
+                    std::cout << "Date de intrare invalide.\n";
+                    return 0;
+                }
+
+                if (numberOfPlayers < 4) {
+                    std::cout << "Jocul necesita cel putin 4 jucatori.\n";
+                    break;
+                }
+
+                std::vector<Player> gamePlayers;
+
+                Role initialRole("Civil", false);
+
+                for (int i = 0; i < numberOfPlayers; i++) {
+                    std::string name;
+
+                    std::cout << "Numele jucatorului " << i + 1 << ": ";
+                    if (!(std::cin >> name)) {
+                        std::cout << "Date de intrare insuficiente.\n";
+                        return 0;
+                    }
+
+                    gamePlayers.push_back(Player(name, initialRole, true));
+                }
+
+                Round firstRound(1, true, numberOfPlayers);
+                Game newGame(gamePlayers, 0, firstRound);
+
+                newGame.assignRandomRoles();
+
+                std::cout << "\nJocul a fost initializat!\n";
+                newGame.showPublicPlayers();
+
+                break;
+            }
+
+
+            case 2:
+                std::cout << "\n===== REGULILE JOCULUI =====\n";
+                std::cout << "Killer-ul elimina un jucator noaptea.\n";
+                std::cout << "Medicul poate proteja un jucator noaptea.\n";
+                std::cout << "Politistul poate investiga un jucator.\n";
+                std::cout << "Ziua, jucatorii voteaza eliminarea unui suspect.\n";
+                std::cout << "Rolurile raman secrete inclusiv dupa eliminare.\n";
+                break;
+            case 3:
+                runTests();
+                break;
+
+            case 0:
+                break;
+
+            default:
+                std::cout << "\nOptiune invalida!\n";
+                break;
+        }
+
+    }
+
+    //runTests();
 
     return 0;
 
