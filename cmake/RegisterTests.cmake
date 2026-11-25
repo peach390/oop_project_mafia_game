@@ -47,7 +47,7 @@ function(register_tests TARGET)
     endif()
 
     if(NOT ARG_LIST_ARGS)
-        # plain assert() tests: nothing to enumerate
+        # plain checkTest() tests: nothing to enumerate
         add_test(NAME ${TARGET} COMMAND ${TARGET})
 
         set_tests_properties(${TARGET} PROPERTIES

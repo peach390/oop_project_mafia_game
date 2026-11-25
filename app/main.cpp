@@ -100,7 +100,7 @@ public:
         isAlive = false;
     }
     void revive() {
-        isAlive = true;         // medicul aduce la viata un jucator
+        isAlive = true;
     }
     friend std::ostream& operator<<(std::ostream& out, const Player& player) {
         out << "Player: " << player.nickname
@@ -482,7 +482,7 @@ public:
     bool revealRolesOneByOne() const {
         std::string input;
 
-        std::cout << "\n===== DISTRIBUIREA ROLURILOR =====\n";
+        std::cout << "\n\t\t DISTRIBUIREA ROLURILOR\n";
 
         for (int i = 0; i < getNumberOfPlayers(); i++) {
             std::cout << "\nEste randul lui "
@@ -549,13 +549,10 @@ public:
 void playGame() {
     while (checkWinner() == 0) {
 
-        // =========================
-        // ZIUA
-        // =========================
         if (roundaCurenta.getisDay()) {
-            std::cout << "\n===== ZIUA "
+            std::cout << "\nZIUA "
                       << roundaCurenta.getnumber()
-                      << " =====\n";
+                      << std::endl;
 
             showPublicPlayersWithNumbers();
             roundaCurenta.resetvote();
@@ -617,9 +614,8 @@ void playGame() {
                     return;
             }
 
-            // REZULTATELE VOTULUI
 
-            std::cout << "\n===== REZULTATELE VOTULUI =====\n";
+            std::cout << "\n\t\t REZULTATELE VOTULUI \n";
 
             const std::vector<int>& votes = roundaCurenta.getvotes();
 
@@ -657,16 +653,11 @@ void playGame() {
 
             nextPhase();
         }
-
-        // =========================
-        // NOAPTEA
-        // =========================
         if (!roundaCurenta.getisDay()) {
-            std::cout << "\n===== NOAPTEA "
+            std::cout << "\n\t\t NOAPTEA "
                       << roundaCurenta.getnumber()
-                      << " =====\n";
+                      << std::endl;
 
-            // KILLER
             int killerIndex = -1;
 
             for (int i = 0; i < getNumberOfPlayers(); i++) {
@@ -701,7 +692,7 @@ void playGame() {
                     return;
             }
 
-            // MEDIC
+
             if (isMedicAlive()) {
                 std::cout << "\nEste randul Medicului.\n";
                 showPublicPlayersWithNumbers();
@@ -726,7 +717,7 @@ void playGame() {
                     return;
             }
 
-            // POLITIST
+
             if (isPoliceAlive()) {
                 std::cout << "\nEste randul Politistului.\n";
                 showPublicPlayersWithNumbers();
@@ -754,13 +745,13 @@ void playGame() {
                 if (!hideScreen())
                     return;
             }
-            // REZOLVAREA NOPTII
+
 
             int attackedIndex = killerLastTarget;
 
             resolveNight();
 
-            std::cout << "\n===== DIMINEATA =====\n";
+            std::cout << "\n \t\t DIMINEATA\n";
 
             if (attackedIndex >= 0 &&
                 attackedIndex < getNumberOfPlayers() &&
@@ -784,11 +775,9 @@ void playGame() {
         }
     }
 
-    // =========================
-    // FINALUL JOCULUI
-    // =========================
 
-    std::cout << "\n===== GAME OVER =====\n";
+
+    std::cout << "\n \t \t GAME OVER \n";
 
     int winner = checkWinner();
 
@@ -816,16 +805,15 @@ void playGame() {
 };
 void checkTest(bool condition) {
     if (!condition) {
-        std::cerr << "TEST FAILED!\n";
+        std::cerr << "TEST PICAT!\n";
         std::abort();
     }
 }
 void runTests() {
-    std::cout << "\n===== START TESTS =====\n";
+    std::cout << "\n\t\t START TESTS \n";
 
-    // =========================
     // 1. TEST ROLE
-    // =========================
+
 
     std::cout << "\nTesting Role...\n";
 
@@ -848,10 +836,8 @@ void runTests() {
 
     std::cout << "Role tests passed!\n";
 
-
-    // =========================
     // 2. TEST PLAYER
-    // =========================
+
 
     std::cout << "\nTesting Player...\n";
 
@@ -1285,7 +1271,7 @@ int main() {
 
     int option = -1;
     while (option != 0) {
-        std::cout<< std::endl << "MAFIA GAME"<<std::endl;
+        std::cout<< std::endl << "\t\t MAFIA GAME"<<std::endl;
         std::cout<< "1. Start joc"<<std::endl;
         std::cout<< "2. Reguli"<<std::endl;
         std::cout<< "3. ruleaza teste"<<std::endl;
@@ -1350,7 +1336,7 @@ int main() {
 
 
             case 2:
-                std::cout << "\n===== REGULILE JOCULUI =====\n";
+                std::cout << "\n \t\t REGULILE JOCULUI\n";
                 std::cout << "Killer-ul elimina un jucator noaptea.\n";
                 std::cout << "Medicul poate proteja un jucator noaptea.\n";
                 std::cout << "Politistul poate investiga un jucator.\n";
@@ -1370,9 +1356,6 @@ int main() {
         }
 
     }
-
-    //runTests();
-
     return 0;
 
 
