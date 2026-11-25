@@ -593,10 +593,10 @@ void runTests() {
     Round gameRound(1, true, 4);
     Game game1(listaPlayers, 0, gameRound);
     // Testarea afisarii jucatorilor
-    //game1.showPlayers();
+    game1.showPlayers();
 
     // Testarea afisarii publice
-    //game1.showPublicPlayers();
+    game1.showPublicPlayers();
     assert(game1.getNumberOfPlayers() == 4);
     assert(game1.getAlivePlayers() == 4);
 
